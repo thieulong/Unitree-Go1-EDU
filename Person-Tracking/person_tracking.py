@@ -19,6 +19,8 @@ class Person_tracking:
         self.sub = rospy.Subscriber(sub_topic, PositionMeasurementArray, self.tracker_callback)
         self.frame = PositionMeasurementArray()
 
+        self.tracker = list()
+
     def check_closest_point(self, coord_list):
         score_list = list()
 
@@ -67,45 +69,40 @@ class Person_tracking:
         person_detected = len(msg.people)
         person_coord_list = list()
 
-        tracker = list()
-        frame = list()
-
         print("Total people detected:", person_detected)
-        if not tracker:
+        if not self.tracker:
             if person_detected == 0:
                 pass
             elif person_detected > 0:
                 for i in range(person_detected):
                     person_coord_list.append([msg.people[i].pos.x, msg.people[i].pos.y])
-                tracker = self.check_closest_point(coord_list=person_coord_list)
-                if tracker is None:
+                self.tracker = self.check_closest_point(coord_list=person_coord_list)
+                if self.tracker is None:
                     print("Tracker initialization failed, skipping this frame")
                     pass
-                elif tracker:
+                elif self.tracker:
                     person_coord_list = list()
                     location_data = Float64MultiArray()
-                    location_data.data = [tracker[0], tracker[1]]
+                    location_data.data = [self.tracker[0], self.tracker[1]]
                     self.pub.publish(location_data)
                     print("Tracker set on coordinate:", location_data.data)
 
-        elif tracker:
+        elif self.tracker:
             if person_detected == 0:
                 print("No person detected!")
                 pass
             elif person_detected > 0:
                 for i in range(person_detected):
                     person_coord_list.append([msg.people[i].pos.x, msg.people[i].pos.y])
-                selected_person = self.check_lowest_offset(tracker=tracker, coord_list=person_coord_list)
+                selected_person = self.check_lowest_offset(tracker=self.tracker, coord_list=person_coord_list)
                 if selected_person is None:
                     print("Lost tracker as person is moving too fast or out of range")
                     pass
                 elif selected_person:
-                    frame = selected_person
-                    tracker = frame
+                    self.tracker = selected_person
                     person_coord_list = list()
-                    frame = list()
                     location_data = Float64MultiArray()
-                    location_data.data = [tracker[0], tracker[1]]
+                    location_data.data = [self.tracker[0], self.tracker[1]]
                     self.pub.publish(location_data)
                     print("Publish current coordinateeee:", location_data.data)
                 
