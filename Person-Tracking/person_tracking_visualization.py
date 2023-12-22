@@ -22,6 +22,10 @@ class Person_tracking:
         self.marker_pub = rospy.Publisher(marker_topic, Marker, queue_size=10)
         self.frame = PositionMeasurementArray()
 
+    def euclidean_distance(self, point1, point2):
+        return math.sqrt(math.pow(point2[0] - point1[0], 2) + math.pow(point2[1] - point1[1], 2))
+
+
     def tracker_callback(self, msg):
         person_detected = len(msg.people)
         person_coord_list = list()
@@ -70,6 +74,7 @@ class Person_tracking:
                     print("Publish current coordinateeee:", location_data.data)
                     self.publish_marker(tracker[0], tracker[1])
 
+
     def check_closest_point(self, coord_list):
         score_list = list()
 
@@ -88,13 +93,14 @@ class Person_tracking:
         else:
             print("People detected but unable to initialize tracker, please stand closer to the robot.")
             return None
+        
 
     def check_lowest_offset(self, tracker, coord_list):
         tracker_range = math.sqrt(2)
         score_list = list()
 
         for coord in range(len(coord_list)):
-            euclidean_distance = math.dist(tracker, coord_list[coord])
+            euclidean_distance = self.euclidean_distance(point1=tracker, point2=coord_list[coord])
             score_list.append(euclidean_distance)
 
         smallest_distance = min(score_list)
@@ -109,6 +115,7 @@ class Person_tracking:
         else:
             print("Lost tracker due to Euclidean distance limits")
             return None
+        
 
     def publish_marker(self, x, y):
         marker = Marker()

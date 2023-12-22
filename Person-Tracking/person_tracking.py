@@ -21,6 +21,9 @@ class Person_tracking:
 
         self.tracker = list()
 
+    def euclidean_distance(self, point1, point2):
+        return math.sqrt(math.pow(point2[0] - point1[0], 2) + math.pow(point2[1] - point1[1], 2))
+
     def check_closest_point(self, coord_list):
         score_list = list()
 
@@ -47,7 +50,7 @@ class Person_tracking:
         score_list = list()
         
         for coord in range(len(coord_list)):
-            euclidean_distance = math.dist(tracker, coord_list[coord])
+            euclidean_distance = self.euclidean_distance(point1=tracker, point2=coord_list[coord])
             score_list.append(euclidean_distance)
         
         smallest_distance = min(score_list)
