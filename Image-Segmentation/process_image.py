@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import csv
 import torch
@@ -15,34 +17,41 @@ from mit_semseg.utils import colorEncode
 # ROS initialization
 rospy.init_node('semantic_segmentation_node')
 bridge = CvBridge()
-color_pub = rospy.Publisher('/color_output', Image, queue_size=1)
-grayscale_pub = rospy.Publisher('/grayscale_output', Image, queue_size=1)
+#color_pub = rospy.Publisher('/color_output', Image, queue_size=1)
+#grayscale_pub = rospy.Publisher('/grayscale_output', Image, queue_size=1)
+
+color_pub = rospy.Publisher('/color_output', Image, queue_size=10)
+grayscale_pub = rospy.Publisher('/grayscale_output', Image, queue_size=10)
 
 # Load the color map and class names
-colors = scipy.io.loadmat('data/color150.mat')['colors']
+colors_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/color150.mat')
+colors = scipy.io.loadmat(colors_file)['colors']
 names = {}
-with open('data/object150_info.csv') as f:
+object_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/object150_info.csv')
+with open(object_file) as f:
     reader = csv.reader(f)
     next(reader)
     for row in reader:
         names[int(row[0])] = row[5].split(";")[0]
 
 # Network Builders
+encoder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ckpt/ade20k-resnet50dilated-ppm_deepsup/encoder_epoch_20.pth')
+decoder_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ckpt/ade20k-resnet50dilated-ppm_deepsup/decoder_epoch_20.pth')
 net_encoder = ModelBuilder.build_encoder(
     arch='resnet50dilated',
     fc_dim=2048,
-    weights='ckpt/ade20k-resnet50dilated-ppm_deepsup/encoder_epoch_20.pth')
+    weights=encoder_path)
 net_decoder = ModelBuilder.build_decoder(
     arch='ppm_deepsup',
     fc_dim=2048,
     num_class=150,
-    weights='ckpt/ade20k-resnet50dilated-ppm_deepsup/decoder_epoch_20.pth',
+    weights=decoder_path,
     use_softmax=True)
 
 crit = torch.nn.NLLLoss(ignore_index=-1)
 segmentation_module = SegmentationModule(net_encoder, net_decoder, crit)
 segmentation_module.eval()
-segmentation_module.cuda()
+#segmentation_module.cuda()
 
 grouped_class_indices = [3, 6, 9, 11, 13, 28, 46, 54]
 
@@ -52,6 +61,7 @@ def image_callback(msg):
 
     # Apply transformations
     img_data = torchvision.transforms.ToTensor()(cv_image)
+    #singleton_batch = {'img_data': img_data[None].cuda()}
     singleton_batch = {'img_data': img_data[None].cuda()}
     output_size = img_data.shape[1:]
 
@@ -76,7 +86,7 @@ def image_callback(msg):
     grayscale_pub.publish(grayscale_segmented_image_msg)
 
 # Subscribe to the raw_image topic
-rospy.Subscriber("/raw_image", Image, image_callback)
+rospy.Subscriber("/camera/front/left/image_rect_color", Image, image_callback)
 
 # Spin to keep the node alive
 rospy.spin()
