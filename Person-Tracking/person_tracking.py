@@ -2,26 +2,31 @@
 
 import rospy
 import math
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, Header
 from people_msgs.msg import PositionMeasurementArray
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PoseStamped, Point, Quaternion
 
 sensitivity_percentage = 80
 startup_distance_requirement = 1
 boundary_threshold = 0.8
 max_detection_distance = 1
 
-class Person_tracking:
+class PersonTracking:
     def __init__(self):
-        pub_topic = "/person_lock_on"
-        sub_topic = "/people_tracker_measurements"
+        tracker_topic = "/person_tracking"
+        detection_topic = "/people_tracker_measurements"
         marker_topic = "/person_markers"
+        goal_topic = "/move_base_simple/goal"
 
-        self.pub = rospy.Publisher(pub_topic, Float64MultiArray, queue_size=10)
-        self.sub = rospy.Subscriber(sub_topic, PositionMeasurementArray, self.tracker_callback)
+        self.tracking = rospy.Publisher(tracker_topic, Float64MultiArray, queue_size=10)
+        self.goal = rospy.Publisher(goal_topic, PoseStamped, queue_size=10)
+        self.marker = rospy.Publisher(marker_topic, Marker, queue_size=10)
 
-        self.marker_pub = rospy.Publisher(marker_topic, Marker, queue_size=10)
+        self.sub = rospy.Subscriber(detection_topic, PositionMeasurementArray, self.tracker_callback)
+
         self.frame = PositionMeasurementArray()
+
         self.tracker = list()
 
     def euclidean_distance(self, point1, point2):
@@ -31,45 +36,65 @@ class Person_tracking:
     def tracker_callback(self, msg):
         person_detected = len(msg.people)
         person_coord_list = list()
+        tracking_history = list()
 
+        print("---")
         print("Total people detected:", person_detected)
+
         if not self.tracker:
+
             if person_detected == 0:
-                pass
+                location_data = Float64MultiArray()
+                location_data.data = [0,0,0,0]
+                self.tracking.publish(location_data)
+
             elif person_detected > 0:
                 for i in range(person_detected):
                     person_coord_list.append([msg.people[i].pos.x, msg.people[i].pos.y])
                 self.tracker = self.check_closest_point(coord_list=person_coord_list)
-                if self.tracker is None:
-                    print("Tracker initialization failed, skipping this frame")
-                    pass
-                elif self.tracker:
-                    person_coord_list = list()
+
+                if self.tracker:
                     location_data = Float64MultiArray()
                     location_data.data = [self.tracker[0], self.tracker[1]]
-                    self.pub.publish(location_data)
+                    self.tracking.publish(location_data)
+
                     print("Tracker set on coordinate:", location_data.data)
                     self.publish_marker(self.tracker[0], self.tracker[1])
 
+                    person_coord_list = list()
+                else:
+                    print("Tracker initialization failed, skipping this frame")
+                    pass
+
         elif self.tracker:
+            tracking_history.append(self.tracker)
+
             if person_detected == 0:
-                print("No person detected!")
-                pass
+                location_data = Float64MultiArray()
+                location_data.data = [0,0,0,0]
+                self.tracking.publish(location_data)
+
             elif person_detected > 0:
                 for i in range(person_detected):
                     person_coord_list.append([msg.people[i].pos.x, msg.people[i].pos.y])
-                selected_person = self.check_lowest_offset(tracker=self.tracker, coord_list=person_coord_list)
-                if selected_person is None:
+                new_tracker = self.check_lowest_offset(tracker=self.tracker, coord_list=person_coord_list)
+
+                if new_tracker:
+                    tracking_history.append(new_tracker)
+                    self.tracker = new_tracker
+
+                    location_data = Float64MultiArray()
+                    location_data.data = [tracking_history[0][0], tracking_history[0][1], tracking_history[1][0], tracking_history[1][1]]
+                    self.tracking.publish(location_data)
+
+                    print("Publish current coordinates:", location_data.data)
+                    self.publish_goal(tracker=self.tracker)
+                    self.publish_marker(self.tracker[0], self.tracker[1])
+
+                    person_coord_list = list()
+                else:
                     print("Lost tracker as a person is moving too fast or out of range")
                     pass
-                elif selected_person:
-                    self.tracker = selected_person
-                    person_coord_list = list()
-                    location_data = Float64MultiArray()
-                    location_data.data = [self.tracker[0], self.tracker[1]]
-                    self.pub.publish(location_data)
-                    print("Publish current coordinateeee:", location_data.data)
-                    self.publish_marker(self.tracker[0], self.tracker[1])
 
 
     def check_closest_point(self, coord_list):
@@ -116,7 +141,8 @@ class Person_tracking:
 
     def publish_marker(self, x, y):
         marker = Marker()
-        marker.header.frame_id = "/base_link"  # Change the frame_id if needed
+        # marker.header.frame_id = "/base_link" 
+        marker.header.frame_id = "/laser" 
         marker.header.stamp = rospy.Time.now()
         marker.ns = "person_markers"
         marker.id = 0
@@ -134,11 +160,20 @@ class Person_tracking:
         marker.scale.z = 0.2
         marker.color.a = 1.0
         marker.color.r = 1.0
-        marker.color.g = 0.0
+        marker.color.g = 1.0
         marker.color.b = 0.0
-        self.marker_pub.publish(marker)
+        self.marker.publish(marker)
+
+    def publish_goal(self, tracker):
+        goal_msg = PoseStamped()
+        goal_msg.header = Header(frame_id="/slamware_map")
+
+        goal_msg.pose.position = Point(x=tracker[0], y=tracker[1], z=0)
+        goal_msg.pose.orientation = Quaternion(x=0, y=0, z=0, w=0)
+
+        self.goal.publish(goal_msg)
 
 if __name__ == '__main__':
     rospy.init_node('person_tracking')
-    Person_tracking()
+    PersonTracking()
     rospy.spin()
