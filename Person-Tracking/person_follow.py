@@ -10,7 +10,7 @@ class Person_follow:
         sub__topic = "/person_tracking"
 
         self.pub_ = rospy.Publisher(pub__topic, Twist, queue_size=10)
-        self.sub_ = rospy.Subscriber(sub__topic, Float64MultiArray, self.follow_callback(mode="left"))
+        self.sub_ = rospy.Subscriber(sub__topic, Float64MultiArray, self.follow_callback)
         self.vel_msg = Twist()
 
         self.THRES_X = 0.2
@@ -25,7 +25,7 @@ class Person_follow:
         self.zero_up = 0.01
         self.zero_down = -0.01
 
-    def follow_callback(self, msg, mode):
+    def follow_callback(self, msg, mode="left"):
         
         if (msg.data == [0,0,0,0]):
             self.vel_msg.linear.x = 0
