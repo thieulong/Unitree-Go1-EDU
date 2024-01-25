@@ -63,23 +63,23 @@ class Obst_avoid_2d
             
             if (id == 0) 
             {
-                high_cmd_ros.velocity[0] = -1.0f;
+                high_cmd_ros.velocity[0] = -0.5f;
                 high_cmd_ros.velocity[1] = 0.0f;
             }
             else if (id == 1) 
             {
-                high_cmd_ros.velocity[0] = 1.0f;
+                high_cmd_ros.velocity[0] = 0.5f;
                 high_cmd_ros.velocity[1] = 0.0f;
             }
             else if (id == 2) 
             {
                 high_cmd_ros.velocity[0] = 0.0f;
-                high_cmd_ros.velocity[1] = -1.0f;
+                high_cmd_ros.velocity[1] = -0.5f;
             }
             else if (id == 3) 
             {
                 high_cmd_ros.velocity[0] = 0.0f;
-                high_cmd_ros.velocity[1] = 1.0f;
+                high_cmd_ros.velocity[1] = 0.5f;
             } 
             else 
             {
