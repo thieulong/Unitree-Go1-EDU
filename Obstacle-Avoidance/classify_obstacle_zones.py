@@ -33,8 +33,6 @@ class DetectObstacles:
         self.person_angle = 0
         self.angle_thres = 5
 
-        self.obstacle_direction = -2
-
     def calc_mean(self, values):
         filtered_list = [v for v in values if not math.isnan(v) and not math.isinf(v)]
         return sum(filtered_list) / len(filtered_list) if filtered_list else 0
@@ -103,6 +101,7 @@ class DetectObstacles:
         if zone_6_mean <= self.right_limit: self.obstacle_zones.append(6)
         if zone_7_mean <= self.right_limit: self.obstacle_zones.append(7)
         if zone_8_mean <= self.back_limit: self.obstacle_zones.append(8)
+        else: self.obstacle_zones.append(0)
 
         combined_data = Float64MultiArray()
         combined_data.data = [self.tracker_x_prev, self.tracker_y_prev, self.tracker_x, self.tracker_y, self.obstacle_zones]
