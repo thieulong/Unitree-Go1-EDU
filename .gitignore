@@ -1,2 +1,3 @@
-ckpt
-ckpt.zip
+src/hotdog_person_follow/src/ckpt
+src/hotdog_person_follow/src/ckpt.zip
+src/hotdog_person_follow/src/*.pth
