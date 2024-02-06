@@ -1,0 +1,36 @@
+<launch>
+ <!-- Run the map server --> 
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find hotdog_navigation)/maps/map.pgm"/>
+
+ <!--- Run AMCL --> 
+    <include file="$(find amcl)/examples/amcl_diff.launch" />
+
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <rosparam file="$(find hotdog_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+        <rosparam file="$(find hotdog_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find hotdog_navigation)/config/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find hotdog_navigation)/config/global_costmap_params.yaml" command="load" /> 
+        <rosparam file="$(find hotdog_navigation)/config/teb_local_planner_params.yaml" command="load" />
+
+        <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+        <param name="planner_frequency" value="1.0" />
+        <param name="planner_patience" value="5.0" />
+
+
+        <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+        <param name="controller_frequency" value="5.0" />
+        <param name="controller_patience" value="15.0" />
+
+    </node>
+
+    <!-- Load the urdf into the parameter server. -->
+    <param name="my_robot_description" textfile="$(find hotdog_navigation)/urdf/go1.urdf"/>
+    
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
+        <remap from="robot_description" to="robot_description" />
+        <remap from="joint_states" to="joint_states" />
+    </node>
+
+    <node pkg='rviz' type='rviz' name='rviz'/>
+
+</launch> 

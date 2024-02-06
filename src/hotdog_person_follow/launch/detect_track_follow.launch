@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find leg_detector)/launch/leg_detector.launch">
+    </include>
+
+    <node pkg="hotdog_person_follow" type="person_tracking.py" name="person_tracking"/>
+    <!--node pkg="hotdog_person_follow" type="person_follow.py" name="person_follow"/-->
+    <node pkg="rviz" type="rviz" name="rviz"/>
+</launch>
