@@ -15,7 +15,8 @@ operation_mode = 1
 # 2 - side 
 pos = 1
 
-set_lateral = 0.1 # m
+set_distance = 0.1 # meter
+set_lateral = 0.1 # meter
 set_angle = 5 # degrees
 
 
@@ -73,8 +74,8 @@ class PIDMovement:
         y = tracker_coords[1]
         # tracker_distance = math.sqrt((x)**2 + (y)**2)
         tracker_distance = x
-        # if x < 0:
-        #     tracker_distance = tracker_distance * -1
+        if x < 0:
+            tracker_distance = tracker_distance * -1
         
         return tracker_distance
 
@@ -83,8 +84,8 @@ class PIDMovement:
         y = tracker_coords[1]
         # tracker_distance = math.sqrt((x)**2 + (y)**2)
         tracker_distance = y
-        # if y < 0:
-        #     tracker_distance = tracker_distance * -1
+        if y < 0:
+            tracker_distance = tracker_distance * -1
         
         return tracker_distance
     
@@ -100,8 +101,8 @@ class PIDMovement:
 
         if self.current_tracker_x == 0 and self.current_tracker_y == 0:
             self.tracker_lost = True
-        else:
-            tracker_coords = [self.current_tracker_x, self.current_tracker_y]
+            
+        tracker_coords = [self.current_tracker_x, self.current_tracker_y]
         dt = 0.1
 
         if operation_mode == 1 or operation_mode == 3:
@@ -168,21 +169,21 @@ class PIDMovement:
 
         if operation_mode == 1:
             if self.tracker_lost is True:
-                movement_commands_msg.data = [self.velocity_memory, self.angular_memory]
+                movement_commands_msg.data = [self.velocity_memory, scaled_angular]
             else:
                 movement_commands_msg.data = [scaled_velocity, scaled_angular]
             self.movement_commands_pub.publish(movement_commands_msg)
         
         elif operation_mode == 2:
             if self.tracker_lost is True:
-                movement_commands_msg.data = [self.velocity_memory, self.angular_memory, self.lateral_memory]
+                movement_commands_msg.data = [self.velocity_memory, scaled_angular, scaled_lateral]
             else:
                 movement_commands_msg.data = [scaled_velocity, scaled_angular, scaled_lateral]
             self.movement_commands_pub.publish(movement_commands_msg)
 
         elif operation_mode == 3:
             if self.tracker_lost is True:
-                movement_commands_msg.data = [self.velocity_memory, self.angular_memory]
+                movement_commands_msg.data = [self.velocity_memory, scaled_angular]
             else:
                 if angle_error in range(-10,10):
                     movement_commands_msg.data = [scaled_velocity, scaled_angular]
