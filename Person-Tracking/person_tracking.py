@@ -138,6 +138,32 @@ class PersonTracking:
             print("Lost tracker due to Euclidean distance limits")
             return None
         
+    def getVec(self, prev, curr):
+        if len(prev) != len(curr):
+            return -1
+        return [curr[i] - prev[i] for i in range(len(curr))]
+
+    def magVec(self, vec):
+        return math.sqrt(sum(i**2 for i in vec))
+
+    def uniVec(self,vec):
+        return [i/self.magVec(vec) for i in vec]
+
+    def nextPos(self,prev,curr):
+        v1 = self.getVec(prev,curr)
+        if v1 == -1:
+            return -1
+        magV1 = self.magVec(self,v1)
+        newPos = [curr[i] + v1[i] for i in range(len(curr))]
+        return newPos, magV1
+
+    def inRadius(self,point, center, r):
+        distance = math.sqrt((point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2)
+        if distance <= r:
+            return True
+        return False
+
+        
 
     def publish_marker(self, x, y):
         marker = Marker()
