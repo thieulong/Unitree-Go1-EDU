@@ -118,7 +118,10 @@ class PersonTracking:
         
 
     def check_lowest_offset(self, tracker, coord_list):
-        tracker_range = 0.5
+        prev = []
+        curr = tracker
+        newPos, tracker_range = self.nextPos(prev,curr)
+        # tracker_range = 0.5
         score_list = list()
 
         for coord in range(len(coord_list)):
