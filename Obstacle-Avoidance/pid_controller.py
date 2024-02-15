@@ -39,6 +39,7 @@ class PIDMovement:
         self.velocity_memory = 0
         self.lateral_memory = 0
         self.angular_memory = 0
+        self.orientation_memory = 0
 
         self.dt = 0.1
 
@@ -60,7 +61,17 @@ class PIDMovement:
         
         return tracker_distance
     
+    def calc_angle(self, tracker_x, tracker_y, robot_x, robot_y):
+        V_x = tracker_x - robot_x
+        V_y = tracker_y - robot_y
+        angle = math.atan(V_y, V_x)
+
+        return round(angle, 2)
+    
     def tracker_callback(self, msg):
+
+        movement_commands_msg = Float64MultiArray()
+
         if len(msg.data) == 6:
             self.tracker_x = msg.data[0]
             self.tracker_y = msg.data[1]
@@ -85,7 +96,16 @@ class PIDMovement:
             else:
                 distance_error = tracker_velocity
 
-            angle_error = self.tracker_angle - self.robot_angle
+            angle_error = self.calc_angle(tracker_x=self.tracker_x,
+                                          tracker_y=self.tracker_y,
+                                          robot_x=self.robot_x,
+                                          robot_y=self.robot_y)
+
+            orientation_error = self.robot_angle - self.tracker_angle
+            if self.robot_angle < 0 and self.tracker_angle > 0:
+                orientation_error = (-self.robot_angle + self.tracker_angle) * -1
+            elif self.robot_angle > 0 and self.tracker_angle < 0:
+                orientation_error = (-self.tracker_angle + self.robot_angle)
 
             self.pid_velocity = PIDController(0.2, 0.05, 0.085)
             control_signal_velocity = self.pid_velocity.calculate(distance_error,
@@ -96,16 +116,33 @@ class PIDMovement:
             self.pid_angular = PIDController(0.25, 0, 0.05)
             control_signal_angular = self.pid_angular.calculate(angle_error,
                                                                 dt=self.dt)
-            scale_factor = 0.05
+            scale_factor = 1
             scaled_angular = control_signal_angular * scale_factor
+
+            self.pid_orientation = PIDController(0.20, 0, 0.05)
+            control_signal_orientation = self.pid_orientation.calculate(orientation_error,
+                                                                        dt=self.dt)
+            scale_factor = 0.05
+            scaled_orientation = control_signal_orientation * scale_factor
 
             print("Velocity:", scaled_velocity)
             print("Angular:", scaled_angular)
+            print("Orientation: ", scaled_orientation)
 
             if scaled_velocity != 0:
                 self.velocity_memory = scaled_velocity
             if scaled_angular != 0:
                 self.angular_memory = scaled_angular
+            if scaled_orientation != 0:
+                self.orientation_memory = scaled_orientation
+
+            if self.tracker_lost is True:
+                movement_commands_msg.data = [self.velocity_memory, scaled_angular]
+            else:
+                movement_commands_msg.data = [scaled_velocity, scaled_angular]
+                if distance_error in range(-0.1,0.1):
+                    movement_commands_msg.data = [scaled_velocity, scaled_orientation]
+            self.movement_commands_pub.publish(movement_commands_msg)
 
         elif self.drive_mode in ["omni"]:
             tracker_velocity = self.calc_distance_x_axis(tracker_x=self.tracker_x,
@@ -159,6 +196,13 @@ class PIDMovement:
             if scaled_angular != 0:
                 self.angular_memory = scaled_angular
 
+            if self.tracker_lost is True:
+                movement_commands_msg.data = [self.velocity_memory, scaled_angular, scaled_lateral]
+            else:
+                movement_commands_msg.data = [scaled_velocity, scaled_angular, scaled_lateral]
+            self.movement_commands_pub.publish(movement_commands_msg)
+
+
         elif self.drive_mode in ["spin"]:
             tracker_velocity = self.calc_distance_x_axis(tracker_x=self.tracker_x,
                                                          tracker_y=self.tracker_y,
@@ -170,6 +214,12 @@ class PIDMovement:
                 distance_error = tracker_velocity
 
             angle_error = self.tracker_angle - self.robot_angle
+
+            orientation_error = self.robot_angle - self.tracker_angle
+            if self.robot_angle < 0 and self.tracker_angle > 0:
+                orientation_error = (-self.robot_angle + self.tracker_angle) * -1
+            elif self.robot_angle > 0 and self.tracker_angle < 0:
+                orientation_error = (-self.tracker_angle + self.robot_angle)
 
             self.pid_velocity = PIDController(0.2, 0.05, 0.085)
             control_signal_velocity = self.pid_velocity.calculate(distance_error,
@@ -183,42 +233,37 @@ class PIDMovement:
             scale_factor = 0.06
             scaled_angular = control_signal_angular * scale_factor
 
+            self.pid_orientation = PIDController(0.20, 0, 0.05)
+            control_signal_orientation = self.pid_orientation.calculate(orientation_error,
+                                                                        dt=self.dt)
+            scale_factor = 0.05
+            scaled_orientation = control_signal_orientation * scale_factor
+
             print("Velocity:", scaled_velocity)
             print("Angular:", scaled_angular)
+            print("Orientation: ", scaled_orientation)
 
             if scaled_velocity != 0:
                 self.velocity_memory = scaled_velocity
             if scaled_angular != 0:
                 self.angular_memory = scaled_angular
+            if scaled_orientation != 0:
+                self.orientation_memory = scaled_orientation
 
-        else:
-            print("Drive mode is not differential, omni or spin & go. Please specify drive mode again.")
-
-        movement_commands_msg = Float64MultiArray()
-
-        if self.drive_mode in ["diff"]:
-            if self.tracker_lost is True:
-                movement_commands_msg.data = [self.velocity_memory, scaled_angular]
-            else:
-                movement_commands_msg.data = [scaled_velocity, scaled_angular]
-            self.movement_commands_pub.publish(movement_commands_msg)
-        
-        elif self.drive_mode in ["omni"]:
-            if self.tracker_lost is True:
-                movement_commands_msg.data = [self.velocity_memory, scaled_angular, scaled_lateral]
-            else:
-                movement_commands_msg.data = [scaled_velocity, scaled_angular, scaled_lateral]
-            self.movement_commands_pub.publish(movement_commands_msg)
-
-        elif self.drive_mode in ["spin"]:
             if self.tracker_lost is True:
                 movement_commands_msg.data = [self.velocity_memory, scaled_angular]
             else:
                 if angle_error in range(-10,10):
                     movement_commands_msg.data = [scaled_velocity, scaled_angular]
+                    if distance_error in range(-0.1,0.1):
+                        movement_commands_msg.data = [scaled_velocity, scaled_orientation]
                 else:
                     movement_commands_msg.data = [0, scaled_angular]
                 self.movement_commands_pub.publish(movement_commands_msg)
+
+        else:
+            print("Drive mode is not differential, omni or spin & go. Please specify drive mode again.")
+
 
 if __name__ == '__main__':
     rospy.init_node('pid_movement')
