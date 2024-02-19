@@ -34,16 +34,18 @@ From ROS Melodic we need extra packages:
 
 1. The robot dog stays in the /high_cmd
 2. The robot dog positions and operation modes table
-| Operation modes \ Positions | :-: | -: |
-| :- | :---------------: | ---------------: |
-| :- | Following at back (Pos:1)  | Side by side (Pos:2) |
+
+
+| Operation modes \ Positions | Pos:1 | Pos:2 |
+| :- | :---------------: | :---------------: |
+| Code | Following at back  | Side by side |
 | 1 | Diff | Diff |
 | 2 | Omni | Omni |
 | 3 | Spin2Go | Spin2Go |
 
 ## Contributing
 
-Leave a message to join if interested in contributing this project
+Leave a message to join if interested in contributing to this project
 
 ## License
 ...
