@@ -29,19 +29,28 @@ From ROS Melodic we need extra packages:
 1. `roslaunch hotdog_person_follow detect_track_follow.launch`
 2. `roslaunch unitree_legged_real avoid_and_follow.launch`
 
+### Change operation Mode/Position
+- operation mode:
+1. Differential: `rosparam set /operation_mode 1`
+2. Omni: `rosparam set /operation_mode 2`
+3. Spin and go: `rosparam set /operation_mode 3`
+
+- position:
+1. Behind: `rosparam set /following_position 1`
+1. Side by side: `rosparam set /following position 2`
 
 ## Configuration
 
-1. The robot dog stays in the /high_cmd
+1. The robot dog stays in the `/high_cmd`
 2. The robot dog positions and operation modes table
 
 
-| Operation modes \ Positions | Pos:1 | Pos:2 |
+| Operation modes \ Positions | Pos: 1 | Pos: 2 |
 | :- | :---------------: | :---------------: |
 | Modes | Following at back  | Following side by side |
 | 1 | Diff | Diff |
 | 2 | Omni | Omni |
-| 3 | Spin2Go | Spin2Go |
+| 3 | Spin&Go | Spin&Go |
 
 ## Contributing
 
