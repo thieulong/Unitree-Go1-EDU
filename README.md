@@ -38,7 +38,7 @@ From ROS Melodic we need extra packages:
 
 | Operation modes \ Positions | Pos:1 | Pos:2 |
 | :- | :---------------: | :---------------: |
-| Code | Following at back  | Side by side |
+| Modes | Following at back  | Following side by side |
 | 1 | Diff | Diff |
 | 2 | Omni | Omni |
 | 3 | Spin2Go | Spin2Go |
