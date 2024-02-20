@@ -56,7 +56,7 @@ From ROS Melodic we need extra packages:
 
 3. The Lidar may need a back up powerbank for working consistency 
 
-- For people working on the dog
+### For people working on the current dog
 1. Go342 cannot use `/cmd_vel`, we have to use `/high_cmd` from unitree
 
 ## Contributing
