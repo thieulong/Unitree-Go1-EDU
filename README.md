@@ -40,6 +40,7 @@ From ROS Melodic we need extra packages:
 2. Omni: `rosparam set /operation_mode 2`
 3. Spin and go: `rosparam set /operation_mode 3`
 
+
 ## Configuration
 
 1. The robot dog stays in the `/high_cmd`
@@ -52,6 +53,11 @@ From ROS Melodic we need extra packages:
 | 1 | Diff | Diff |
 | 2 | Omni | Omni |
 | 3 | Spin&Go | Spin&Go |
+
+3. The Lidar may need a back up powerbank for working consistency 
+
+- For people working on the dog
+1. Go342 cannot use `/cmd_vel`, we have to use `/high_cmd` from unitree
 
 ## Contributing
 
