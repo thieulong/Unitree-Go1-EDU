@@ -13,7 +13,7 @@ The aim is to develop a robust system capable of stable tracking in diverse envi
 
 ## Installation
 
-This project is using ROS 1 with Ubuntu 18.
+This project is using ROS 1 with Ubuntu 18.04 lts
 To install Ubuntu 18 ROS Melodic: https://wiki.ros.org/melodic/Installation/Ubuntu
 
 From ROS Melodic we need extra packages:
@@ -22,7 +22,21 @@ From ROS Melodic we need extra packages:
 3. Movebase: https://wiki.ros.org/move_base
 4. Leg detecter: https://wiki.ros.org/leg_detector
 
+From the dog we need to add the robot's ROS_MASTER_URI to bash.rc:
+1. `cd ~`
+2. `nano .bashrc`
+3. scroll to the bottom of the file and add these line:
+
+
 To set up the unitree Go1: https://m.unitree.com/download/go1/
+
+To build the environment:
+1. `mkdir ~/catkin_ws/src`
+2. `cd ~/catkin_ws/src`
+3. `git clone https://github.com/thieulong/Unitree-Go1-EDU.git`
+4. `cd ~/catkin_ws`
+5. `catkin_make`
+6. `source devel/setup.bash`
 
 ## Usage
 
@@ -60,10 +74,8 @@ To set up the unitree Go1: https://m.unitree.com/download/go1/
 
 ### For people working on the current dog
 1. Go342 cannot use `/cmd_vel`, we have to use `/high_cmd` from unitree
+2. The dog might need to move around a bit for the Wi-Fi connection
 
 ## Contributing
 
 Leave a message to join if interested in contributing to this project
-
-## License
-...
