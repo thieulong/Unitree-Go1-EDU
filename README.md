@@ -22,6 +22,8 @@ From ROS Melodic we need extra packages:
 3. Movebase: https://wiki.ros.org/move_base
 4. Leg detecter: https://wiki.ros.org/leg_detector
 
+To set up the unitree Go1: https://m.unitree.com/download/go1/
+
 ## Usage
 
 ### Dog Following
